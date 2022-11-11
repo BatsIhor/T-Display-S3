@@ -118,7 +118,7 @@ void setup() {
     ledcWrite(0, i);
     delay(2);
   }
-
+  //delay(2000);
   lv_init();
   lv_disp_buf = (lv_color_t *)heap_caps_malloc(LVGL_LCD_BUF_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
 
@@ -136,7 +136,7 @@ void setup() {
   is_initialized_lvgl = true;
 
   Wire.begin(PIN_IIC_SDA, PIN_IIC_SCL);
-  inited_touch = touch.init(Wire, PIN_TOUCH_RES, PIN_TOUCH_INT);
+  //inited_touch = touch.init(Wire, PIN_TOUCH_RES, PIN_TOUCH_INT);
 
   wifi_test();
 
@@ -166,38 +166,18 @@ void loop() {
     }
     uint32_t volt = (analogRead(PIN_BAT_VOLT) * 2 * 3.3 * 1000) / 4096;
     lv_msg_send(MSG_NEW_VOLT, &volt);
-
-    if (inited_touch) {
-      touch_info_t t;
-      String str_buf;
-      static uint8_t last_finger;
-      touch.get_touch_point(&t);
-      str_buf += " Finger num :";
-      str_buf += t.finger_num;
-      str_buf += " \n";
-      for (uint8_t i = 0; i < t.finger_num; i++) {
-        str_buf += "x:";
-        str_buf += t.point[i].x;
-        str_buf += " y:";
-        str_buf += t.point[i].y;
-        str_buf += " p:";
-        str_buf += t.point[i].pressure;
-        str_buf += " \n";
-      }
-      lv_msg_send(MSG_NEW_TOUCH_POINT, str_buf.c_str());
-    }
     last_tick = millis();
   }
 }
 
-LV_IMG_DECLARE(lilygo2_gif);
+LV_IMG_DECLARE(logos);
 
 void wifi_test(void) {
   String text;
   lv_obj_t *logo_img = lv_gif_create(lv_scr_act());
   lv_obj_center(logo_img);
-  lv_gif_set_src(logo_img, &lilygo2_gif);
-  LV_DELAY(1200);
+  lv_gif_set_src(logo_img, &logos);
+  LV_DELAY(50);
   lv_obj_del(logo_img);
 
   lv_obj_t *log_label = lv_label_create(lv_scr_act());

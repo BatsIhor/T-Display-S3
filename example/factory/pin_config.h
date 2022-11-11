@@ -1,7 +1,7 @@
 #pragma once
 
-#define WIFI_SSID                    "Your-ssid"
-#define WIFI_PASSWORLD               "Your-password"
+#define WIFI_SSID                    "ibats-secure"
+#define WIFI_PASSWORLD               "iB@ts8ecure"
 
 #define WIFI_CONNECT_WAIT_MAX        (30 * 1000)
 

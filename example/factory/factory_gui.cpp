@@ -4,7 +4,7 @@
 #include "lvgl.h"
 
 LV_FONT_DECLARE(font_Alibaba);
-LV_IMG_DECLARE(lilygo1_gif);
+LV_IMG_DECLARE(kart02s);
 static lv_point_t line_points[] = {{-320, 0}, {320, 0}};
 
 static void update_text_subscriber_cb(lv_event_t *e);
@@ -82,7 +82,7 @@ void ui_begin() {
   /* page 2 */
   lv_obj_t *logo_img = lv_gif_create(tv2);
   lv_obj_center(logo_img);
-  lv_gif_set_src(logo_img, &lilygo1_gif);
+  lv_gif_set_src(logo_img, &kart02s);
 
   /* page 3 */
   lv_obj_t *debug_label = lv_label_create(tv3);

@@ -23,9 +23,9 @@ CSTXXX touch(0, 0, 170, 320);
 bool inited_touch = false;
 
 extern const unsigned char img_logo[20000];
-void wifi_test(void);
-void timeavailable(struct timeval *t);
-void printLocalTime();
+void showLogo(void);
+// void timeavailable(struct timeval *t);
+// void printLocalTime();
 void SmartConfig();
 
 static bool example_notify_lvgl_flush_ready(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_io_event_data_t *edata, void *user_ctx) {
@@ -52,7 +52,7 @@ void setup() {
   Serial.begin(115200);
 
   sntp_servermode_dhcp(1); // (optional)
-  configTime(GMT_OFFSET_SEC, DAY_LIGHT_OFFSET_SEC, NTP_SERVER1, NTP_SERVER2);
+  //configTime(GMT_OFFSET_SEC, DAY_LIGHT_OFFSET_SEC, NTP_SERVER1, NTP_SERVER2);
 
   pinMode(PIN_LCD_RD, OUTPUT);
   digitalWrite(PIN_LCD_RD, HIGH);
@@ -138,17 +138,18 @@ void setup() {
   Wire.begin(PIN_IIC_SDA, PIN_IIC_SCL);
   //inited_touch = touch.init(Wire, PIN_TOUCH_RES, PIN_TOUCH_INT);
 
-  wifi_test();
+  showLogo();
 
-  button1.attachClick([]() {
-    pinMode(PIN_POWER_ON, OUTPUT);
-    pinMode(PIN_LCD_BL, OUTPUT);
-    digitalWrite(PIN_POWER_ON, LOW);
-    digitalWrite(PIN_LCD_BL, LOW);
-    esp_sleep_enable_ext0_wakeup((gpio_num_t)PIN_BUTTON_2, 0); // 1 = High, 0 = Low
-    esp_deep_sleep_start();
-  });
+  // button1.attachClick([]() {
+  //   pinMode(PIN_POWER_ON, OUTPUT);
+  //   pinMode(PIN_LCD_BL, OUTPUT);
+  //   digitalWrite(PIN_POWER_ON, LOW);
+  //   digitalWrite(PIN_LCD_BL, LOW);
+  //   esp_sleep_enable_ext0_wakeup((gpio_num_t)PIN_BUTTON_2, 0); // 1 = High, 0 = Low
+  //   esp_deep_sleep_start();
+  // });
   
+  button1.attachClick([]() { ui_switch_page(); });
   button2.attachClick([]() { ui_switch_page(); });
 }
 
@@ -159,20 +160,20 @@ void loop() {
   delay(3);
   static uint32_t last_tick;
   if (millis() - last_tick > 100) {
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo)) {
-      lv_msg_send(MSG_NEW_HOUR, &timeinfo.tm_hour);
-      lv_msg_send(MSG_NEW_MIN, &timeinfo.tm_min);
-    }
-    uint32_t volt = (analogRead(PIN_BAT_VOLT) * 2 * 3.3 * 1000) / 4096;
-    lv_msg_send(MSG_NEW_VOLT, &volt);
+    // struct tm timeinfo;
+    // if (getLocalTime(&timeinfo)) {
+    //   lv_msg_send(MSG_NEW_HOUR, &timeinfo.tm_hour);
+    //   lv_msg_send(MSG_NEW_MIN, &timeinfo.tm_min);
+    // }
+    // uint32_t volt = (analogRead(PIN_BAT_VOLT) * 2 * 3.3 * 1000) / 4096;
+    // lv_msg_send(MSG_NEW_VOLT, &volt);
     last_tick = millis();
   }
 }
 
 LV_IMG_DECLARE(logos);
 
-void wifi_test(void) {
+void showLogo(void) {
   String text;
   lv_obj_t *logo_img = lv_gif_create(lv_scr_act());
   lv_obj_center(logo_img);
@@ -187,99 +188,99 @@ void wifi_test(void) {
   lv_label_set_long_mode(log_label, LV_LABEL_LONG_SCROLL);
   lv_label_set_recolor(log_label, true);
   LV_DELAY(1);
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  delay(100);
-  int n = WiFi.scanNetworks();
-  Serial.println("scan done");
-  if (n == 0) {
-    text = "no networks found";
-  } else {
-    text = n;
-    text += " networks found\n";
-    for (int i = 0; i < n; ++i) {
-      text += (i + 1);
-      text += ": ";
-      text += WiFi.SSID(i);
-      text += " (";
-      text += WiFi.RSSI(i);
-      text += ")";
-      text += (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? " \n" : "*\n";
-      delay(10);
-    }
-  }
-  lv_label_set_text(log_label, text.c_str());
-  Serial.println(text);
-  LV_DELAY(2000);
-  text = "Connecting to ";
-  Serial.print("Connecting to ");
-  text += WIFI_SSID;
-  text += "\n";
-  Serial.print(WIFI_SSID);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORLD);
-  uint32_t last_tick = millis();
-  uint32_t i = 0;
-  bool is_smartconfig_connect = false;
-  lv_label_set_long_mode(log_label, LV_LABEL_LONG_WRAP);
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    text += ".";
-    lv_label_set_text(log_label, text.c_str());
-    LV_DELAY(100);
-    if (millis() - last_tick > WIFI_CONNECT_WAIT_MAX) { /* Automatically start smartconfig when connection times out */
-      text += "\nConnection timed out, start smartconfig";
-      lv_label_set_text(log_label, text.c_str());
-      LV_DELAY(100);
-      is_smartconfig_connect = true;
-      WiFi.mode(WIFI_AP_STA);
-      Serial.println("\r\n wait for smartconfig....");
-      text += "\r\n wait for smartconfig....";
-      text += "\nPlease use #ff0000 EspTouch# Apps to connect to the distribution network";
-      lv_label_set_text(log_label, text.c_str());
-      WiFi.beginSmartConfig();
-      while (1) {
-        LV_DELAY(100);
-        if (WiFi.smartConfigDone()) {
-          Serial.println("\r\nSmartConfig Success\r\n");
-          Serial.printf("SSID:%s\r\n", WiFi.SSID().c_str());
-          Serial.printf("PSW:%s\r\n", WiFi.psk().c_str());
-          text += "\nSmartConfig Success";
-          text += "\nSSID:";
-          text += WiFi.SSID().c_str();
-          text += "\nPSW:";
-          text += WiFi.psk().c_str();
-          lv_label_set_text(log_label, text.c_str());
-          LV_DELAY(1000);
-          last_tick = millis();
-          break;
-        }
-      }
-    }
-  }
-  if (!is_smartconfig_connect) {
-    text += "\nCONNECTED \nTakes ";
-    Serial.print("\n CONNECTED \nTakes ");
-    text += millis() - last_tick;
-    Serial.print(millis() - last_tick);
-    text += " ms\n";
-    Serial.println(" millseconds");
-    lv_label_set_text(log_label, text.c_str());
-  }
+  // WiFi.mode(WIFI_STA);
+  // WiFi.disconnect();
+  // delay(100);
+  // int n = WiFi.scanNetworks();
+  // Serial.println("scan done");
+  // if (n == 0) {
+  //   text = "no networks found";
+  // } else {
+  //   text = n;
+  //   text += " networks found\n";
+  //   for (int i = 0; i < n; ++i) {
+  //     text += (i + 1);
+  //     text += ": ";
+  //     text += WiFi.SSID(i);
+  //     text += " (";
+  //     text += WiFi.RSSI(i);
+  //     text += ")";
+  //     text += (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? " \n" : "*\n";
+  //     delay(10);
+  //   }
+  // }
+  // lv_label_set_text(log_label, text.c_str());
+  // Serial.println(text);
+  // LV_DELAY(2000);
+  // text = "Connecting to ";
+  // Serial.print("Connecting to ");
+  // text += WIFI_SSID;
+  // text += "\n";
+  // Serial.print(WIFI_SSID);
+  // WiFi.begin(WIFI_SSID, WIFI_PASSWORLD);
+  // uint32_t last_tick = millis();
+  // uint32_t i = 0;
+  // bool is_smartconfig_connect = false;
+  // lv_label_set_long_mode(log_label, LV_LABEL_LONG_WRAP);
+  // while (WiFi.status() != WL_CONNECTED) {
+  //   Serial.print(".");
+  //   text += ".";
+  //   lv_label_set_text(log_label, text.c_str());
+  //   LV_DELAY(100);
+  //   if (millis() - last_tick > WIFI_CONNECT_WAIT_MAX) { /* Automatically start smartconfig when connection times out */
+  //     text += "\nConnection timed out, start smartconfig";
+  //     lv_label_set_text(log_label, text.c_str());
+  //     LV_DELAY(100);
+  //     is_smartconfig_connect = true;
+  //     WiFi.mode(WIFI_AP_STA);
+  //     Serial.println("\r\n wait for smartconfig....");
+  //     text += "\r\n wait for smartconfig....";
+  //     text += "\nPlease use #ff0000 EspTouch# Apps to connect to the distribution network";
+  //     lv_label_set_text(log_label, text.c_str());
+  //     WiFi.beginSmartConfig();
+  //     while (1) {
+  //       LV_DELAY(100);
+  //       if (WiFi.smartConfigDone()) {
+  //         Serial.println("\r\nSmartConfig Success\r\n");
+  //         Serial.printf("SSID:%s\r\n", WiFi.SSID().c_str());
+  //         Serial.printf("PSW:%s\r\n", WiFi.psk().c_str());
+  //         text += "\nSmartConfig Success";
+  //         text += "\nSSID:";
+  //         text += WiFi.SSID().c_str();
+  //         text += "\nPSW:";
+  //         text += WiFi.psk().c_str();
+  //         lv_label_set_text(log_label, text.c_str());
+  //         LV_DELAY(1000);
+  //         last_tick = millis();
+  //         break;
+  //       }
+  //     }
+  //   }
+  // }
+  // if (!is_smartconfig_connect) {
+  //   text += "\nCONNECTED \nTakes ";
+  //   Serial.print("\n CONNECTED \nTakes ");
+  //   text += millis() - last_tick;
+  //   Serial.print(millis() - last_tick);
+  //   text += " ms\n";
+  //   Serial.println(" millseconds");
+  //   lv_label_set_text(log_label, text.c_str());
+  // }
   LV_DELAY(2000);
   ui_begin();
 }
 
-void printLocalTime() {
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) {
-    Serial.println("No time available (yet)");
-    return;
-  }
-  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
-}
-// Callback function (get's called when time adjusts via NTP)
-void timeavailable(struct timeval *t) {
-  Serial.println("Got time adjustment from NTP!");
-  printLocalTime();
-  WiFi.disconnect();
-}
+// void printLocalTime() {
+//   struct tm timeinfo;
+//   if (!getLocalTime(&timeinfo)) {
+//     Serial.println("No time available (yet)");
+//     return;
+//   }
+//   Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+// }
+// // Callback function (get's called when time adjusts via NTP)
+// void timeavailable(struct timeval *t) {
+//   Serial.println("Got time adjustment from NTP!");
+//   printLocalTime();
+//   WiFi.disconnect();
+// }

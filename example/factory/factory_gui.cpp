@@ -1,6 +1,5 @@
 #include "factory_gui.h"
 #include "Arduino.h"
-#include "cstxx.h"
 #include "lvgl.h"
 
 LV_FONT_DECLARE(font_Alibaba);
@@ -83,9 +82,11 @@ void ui_begin() {
   // lv_obj_center(line);
 
   /* page 2 */
+
   lv_obj_t *logo_img = lv_img_create(tv1);
   lv_obj_center(logo_img);
   lv_img_set_src(logo_img, &switch_home);
+  //lv_gif_set_src(logo_img, "/example.gif");
 
   /* page 2 */
   lv_obj_t *game_img = lv_gif_create(tv2);
@@ -93,32 +94,9 @@ void ui_begin() {
   lv_gif_set_src(game_img, &kart02s);
 
   /* page 3 */
-  lv_obj_t *debug_label = lv_label_create(tv3);
-  String text;
-  esp_chip_info_t t;
-  esp_chip_info(&t);
-  text = "chip : ";
-  text += ESP.getChipModel();
-  text += "\n";
-  text += "psram size : ";
-  text += ESP.getPsramSize() / 1024;
-  text += " KB\n";
-  text += "flash size : ";
-  text += ESP.getFlashChipSize() / 1024;
-  text += " KB\n";
-  lv_label_set_text(debug_label, text.c_str());
-  lv_obj_align(debug_label, LV_ALIGN_TOP_LEFT, 0, 0);
-
-  lv_obj_t *bat_label = lv_label_create(tv3);
-  lv_obj_align_to(bat_label, debug_label, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
-  lv_obj_add_event_cb(bat_label, update_text_subscriber_cb, LV_EVENT_MSG_RECEIVED, NULL);
-  lv_msg_subsribe_obj(MSG_NEW_VOLT, bat_label, (void *)"VOLT : %d mV");
-
-  lv_obj_t *touch_label = lv_label_create(tv3);
-  lv_obj_align_to(touch_label, bat_label, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 0);
-  lv_obj_add_event_cb(touch_label, update_touch_point_subscriber_cb, LV_EVENT_MSG_RECEIVED, NULL);
-  lv_msg_subsribe_obj(MSG_NEW_TOUCH_POINT, touch_label, (void *)"%s");
-
+  lv_obj_t *game_img1 = lv_gif_create(tv3);
+   lv_obj_center(game_img1);
+  lv_gif_set_src(game_img1, &kart03s);
   //lv_timer_t *timer = lv_timer_create(timer_task, 500, seg_text);
 }
 

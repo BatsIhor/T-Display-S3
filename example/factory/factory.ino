@@ -1,15 +1,13 @@
 #include "Arduino.h"
 #include "OneButton.h"
-#include "WiFi.h"
-#include "cstxx.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_lcd_panel_vendor.h"
 #include "factory_gui.h"
 #include "lvgl.h"
 #include "pin_config.h"
-#include "sntp.h"
-#include "time.h"
+#include <SPIFFS.h>
+#define FLASHFS SPIFFS
 
 esp_lcd_panel_io_handle_t io_handle = NULL;
 static lv_disp_draw_buf_t disp_buf; // contains internal graphic buffer(s) called draw buffer(s)
@@ -18,7 +16,6 @@ static lv_color_t *lv_disp_buf;
 static bool is_initialized_lvgl = false;
 OneButton button1(PIN_BUTTON_1, true);
 OneButton button2(PIN_BUTTON_2, true);
-CSTXXX touch(0, 0, 170, 320);
 
 bool inited_touch = false;
 
@@ -50,9 +47,6 @@ void setup() {
   pinMode(PIN_POWER_ON, OUTPUT);
   digitalWrite(PIN_POWER_ON, HIGH);
   Serial.begin(115200);
-
-  sntp_servermode_dhcp(1); // (optional)
-  //configTime(GMT_OFFSET_SEC, DAY_LIGHT_OFFSET_SEC, NTP_SERVER1, NTP_SERVER2);
 
   pinMode(PIN_LCD_RD, OUTPUT);
   digitalWrite(PIN_LCD_RD, HIGH);
@@ -135,7 +129,7 @@ void setup() {
 
   is_initialized_lvgl = true;
 
-  Wire.begin(PIN_IIC_SDA, PIN_IIC_SCL);
+  //Wire.begin(PIN_IIC_SDA, PIN_IIC_SCL);
   //inited_touch = touch.init(Wire, PIN_TOUCH_RES, PIN_TOUCH_INT);
 
   showLogo();
@@ -181,13 +175,13 @@ void showLogo(void) {
   LV_DELAY(50);
   lv_obj_del(logo_img);
 
-  lv_obj_t *log_label = lv_label_create(lv_scr_act());
-  lv_obj_align(log_label, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_set_width(log_label, LV_PCT(100));
-  lv_label_set_text(log_label, "Scan WiFi");
-  lv_label_set_long_mode(log_label, LV_LABEL_LONG_SCROLL);
-  lv_label_set_recolor(log_label, true);
-  LV_DELAY(1);
+  // lv_obj_t *log_label = lv_label_create(lv_scr_act());
+  // lv_obj_align(log_label, LV_ALIGN_TOP_LEFT, 0, 0);
+  // lv_obj_set_width(log_label, LV_PCT(100));
+  // lv_label_set_text(log_label, "Scan WiFi");
+  // lv_label_set_long_mode(log_label, LV_LABEL_LONG_SCROLL);
+  // lv_label_set_recolor(log_label, true);
+  // LV_DELAY(1);
   // WiFi.mode(WIFI_STA);
   // WiFi.disconnect();
   // delay(100);
